@@ -175,6 +175,7 @@ class JDETracker(object):
         refind_stracks = []
         lost_stracks = []
         removed_stracks = []
+        scores = []
 
         t1 = time.time()
         ''' Step 1: Network forward, get detections & embeddings'''
@@ -184,6 +185,7 @@ class JDETracker(object):
         if len(pred) > 0:
             dets = non_max_suppression(pred.unsqueeze(0), self.opt.conf_thres, self.opt.nms_thres)[0].cpu()
             scale_coords(self.opt.img_size, dets[:, :4], img0.shape).round()
+            scores = dets[:, 4]
             '''Detections'''
             detections = [STrack(STrack.tlbr_to_tlwh(tlbrs[:4]), tlbrs[4], f.numpy(), 30) for
                           (tlbrs, f) in zip(dets[:, :5], dets[:, -self.model.emb_dim:])]
@@ -292,7 +294,7 @@ class JDETracker(object):
         logger.debug('Removed: {}'.format([track.track_id for track in removed_stracks]))
         t5 = time.time()
         # print('Final {} s'.format(t5-t4))
-        return output_stracks
+        return output_stracks, scores
 
 def joint_stracks(tlista, tlistb):
     exists = {}
