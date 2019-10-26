@@ -17,14 +17,14 @@ from utils.utils import *
 
 def write_results(filename, results, data_type):
     if data_type == 'mot':
-        save_format = '{str_time},{frame},{id},{x1},{y1},{w},{h},1,-1,-1,-1\n'
+        save_format = '{str_time},{frame},{id},{score},{x1},{y1},{w},{h},1,-1,-1,-1\n'
     elif data_type == 'kitti':
-        save_format = '{str_time},{frame} {id} pedestrian 0 0 -10 {x1} {y1} {x2} {y2} -10 -10 -10 -1000 -1000 -1000 -10\n'
+        save_format = '{str_time},{frame},{id},{score},pedestrian 0 0 -10 {x1} {y1} {x2} {y2} -10 -10 -10 -1000 -1000 -1000 -10\n'
     else:
         raise ValueError(data_type)
 
     with open(filename, 'w') as f:
-        for frame_id, tlwhs, track_ids, strTime in results:
+        for frame_id, tlwhs, track_ids, strTime, score in results:
             if data_type == 'kitti':
                 frame_id -= 1
             for tlwh, track_id in zip(tlwhs, track_ids):
@@ -32,7 +32,7 @@ def write_results(filename, results, data_type):
                     continue
                 x1, y1, w, h = tlwh
                 x2, y2 = x1 + w, y1 + h
-                line = save_format.format(str_time=strTime, frame=frame_id, id=track_id, x1=x1, y1=y1, x2=x2, y2=y2, w=w, h=h)
+                line = save_format.format(str_time=strTime, frame=frame_id, id=track_id, score=score, x1=x1, y1=y1, x2=x2, y2=y2, w=w, h=h)
                 f.write(line)
     logger.info('save results to {}'.format(filename))
 
@@ -51,9 +51,14 @@ def eval_seq(opt, dataloader, data_type, result_filename, save_dir=None, show_im
         # run tracking
         timer.tic()
         blob = torch.from_numpy(img).cuda().unsqueeze(0)
-        online_targets = tracker.update(blob, img0)
+        online_targets, scores = tracker.update(blob, img0)
         online_tlwhs = []
         online_ids = []
+        frame_time = []
+        timestamp = time.time()
+        localTime = time.localtime(timestamp)
+        strTime = time.strftime("%Y-%m-%d %H:%M:%S", localTime)
+        
         for t in online_targets:
             tlwh = t.tlwh
             tid = t.track_id
@@ -61,13 +66,10 @@ def eval_seq(opt, dataloader, data_type, result_filename, save_dir=None, show_im
             if tlwh[2] * tlwh[3] > opt.min_box_area and not vertical:
                 online_tlwhs.append(tlwh)
                 online_ids.append(tid)
+                frame_time.append(strTime)
         timer.toc()
-        # save results
-        timestamp = time.time()
-        localTime = time.localtime(timestamp)
-        strTime = time.strftime("%Y-%m-%d %H:%M:%S", localTime)
-        
-        results.append((frame_id + 1, online_tlwhs, online_ids, strTime))
+        # save results      
+        results.append((frame_id + 1, online_tlwhs, online_ids, frame_time, scores))
         if show_image or save_dir is not None:
             online_im = vis.plot_tracking(img0, online_tlwhs, online_ids, frame_id=frame_id,
                                           fps=1. / timer.average_time)
