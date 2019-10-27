@@ -32,6 +32,7 @@ def write_results(filename, results, data_type):
                     continue
                 x1, y1, w, h = tlwh
                 x2, y2 = x1 + w, y1 + h
+                score = ("%.4f" % score)
                 line = save_format.format(str_time=strTime, frame=frame_id, id=track_id, score=score, x1=x1, y1=y1, x2=x2, y2=y2, w=w, h=h)
                 f.write(line)
     logger.info('save results to {}'.format(filename))
