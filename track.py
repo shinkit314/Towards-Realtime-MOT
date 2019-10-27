@@ -24,10 +24,10 @@ def write_results(filename, results, data_type):
         raise ValueError(data_type)
 
     with open(filename, 'w') as f:
-        for frame_id, tlwhs, track_ids, strTime, score in results:
+        for frame_id, tlwhs, track_ids, frame_time, scores in results:
             if data_type == 'kitti':
                 frame_id -= 1
-            for tlwh, track_id in zip(tlwhs, track_ids):
+            for tlwh, track_idm, strTime, score zip(tlwhs, track_ids, frame_time, scores):
                 if track_id < 0:
                     continue
                 x1, y1, w, h = tlwh
