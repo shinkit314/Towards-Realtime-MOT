@@ -39,11 +39,11 @@ def plot_tracking(image, tlwhs, obj_ids, scores=None, frame_id=0, fps=0., ids2=N
     cv2.putText(im, 'frame: %d fps: %.2f num: %d' % (frame_id, fps, len(tlwhs)),
                 (0, int(15 * text_scale)), cv2.FONT_HERSHEY_PLAIN, text_scale, (0, 0, 255), thickness=2)
 
-    for i, tlwh in enumerate(tlwhs):
+    for i, (tlwh, score) in enumerate(zip(tlwhs, scores)):
         x1, y1, w, h = tlwh
         intbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
         obj_id = int(obj_ids[i])
-        id_text = '{} {}'.format(int(obj_id), str(scores[i])[:6])
+        id_text = '{} {}'.format(int(obj_id), str(format("%.5f" % score))[:6])
         if ids2 is not None:
             id_text = id_text + ', {}'.format(int(ids2[i]))
         _line_thickness = 1 if obj_id <= 0 else line_thickness
