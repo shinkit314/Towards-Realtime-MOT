@@ -285,7 +285,14 @@ class JDETracker(object):
         self.tracked_stracks, self.lost_stracks = remove_duplicate_stracks(self.tracked_stracks, self.lost_stracks)
 
         # get scores of lost tracks
-        output_stracks = [track for track in self.tracked_stracks if track.is_activated]
+        output_scores = []
+        output_stracks = []
+        for track, score in zip(self.tracked_stracks, scores):
+            if track.is_activated:
+                output_stracks.append(track)
+                output_scores.append(score)
+                
+        #output_stracks = [track for track in self.tracked_stracks if track.is_activated]
 
         logger.debug('===========Frame {}=========='.format(self.frame_id))
         logger.debug('Activated: {}'.format([track.track_id for track in activated_starcks]))
@@ -294,7 +301,7 @@ class JDETracker(object):
         logger.debug('Removed: {}'.format([track.track_id for track in removed_stracks]))
         t5 = time.time()
         # print('Final {} s'.format(t5-t4))
-        return output_stracks, scores
+        return output_stracks, output_scores
 
 def joint_stracks(tlista, tlistb):
     exists = {}
